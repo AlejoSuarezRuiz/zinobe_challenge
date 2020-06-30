@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Country language!</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+  </head>
+  <body>
+  <section class="section">
+    <div class="container">
+        <h1 class="title is-2">
+            Country Language Encode
+        </h1>
+        <p class="mt-4 is-size-6">
+            This list of countries is obtained from <a>https://restcountries.eu/</a> API.
+            There is one country per region randomly obtained.
+            The list of languages are encoded with SHA-1 encryption method, if the country have more than
+            one official language, there are joined in a string and separed with ",". Everything was developed
+            with <strong>Python.</strong>
+        </p>
+
+        <div id="main-content" class="main-content">
+            <table class="table is-hoverable is-fullwidth mt-4">
+                <thead>
+                <tr>
+                    <th>Region</th>
+                    <th>Country</th>
+                    <th>Language</th>
+                    <th>Time</th>
+                </tr>
+                </thead>
+                <tbody id="main-table-body"></tbody>
+            </table>
+    
+            <div class="mt-6">
+                <h1 class="title mb-4">Statistics</h1>
+                <p class="mb-6 is-size-6">
+                    There are the collection of statistics during the API call and data frame creation.
+                    All the results are in <strong>seconds.</strong>
+                </p>
+                <div class="columns">
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-content">
+                            <p id="mean-time" class="title"></p>
+                            </div>
+                            <footer class="card-footer">
+                            <p class="card-footer-item">
+                                <span class="icon mr-4 colored-icon is-medium">
+                                    <i class="fas fa-lg fa-percentage"></i>
+                                </span>
+                                <span> Mean time </span>
+                            </p>
+                            </footer>
+                        </div>
+                    </div>
+
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-content">
+                            <p id="max-time" class="title"></p>
+                            </div>
+                            <footer class="card-footer">
+                            <p class="card-footer-item">
+                                <span class="icon mr-4 colored-icon is-medium">
+                                    <i class="fas fa-lg fa-arrow-up"></i>
+                                </span>
+                                <span> Max time </span>
+                            </p>
+                            </footer>
+                        </div>
+                    </div>
+        
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-content">
+                            <p id="min-time" class="title"></p>
+                            </div>
+                            <footer class="card-footer">
+                            <p class="card-footer-item">
+                                <span class="icon mr-4 colored-icon is-medium">
+                                    <i class="fas fa-lg fa-arrow-down"></i>
+                                </span>
+                                <span> Min time </span>
+                            </p>
+                            </footer>
+                        </div>
+                    </div>
+        
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-content">
+                            <p id="total-time" class="title"></p>
+                            </div>
+                            <footer class="card-footer">
+                            <p class="card-footer-item">
+                                <span class="icon mr-4 colored-icon is-medium">
+                                    <i class="fas fa-lg fa-plus"></i>
+                                </span>
+                                <span> Total time </span>
+                            </p>
+                            </footer>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cta-section">
+                <button class="button" onclick="refreshData()">Reload data</button>
+                <button class="button is-secondary" onclick="refreshDataParallel()">Reload parallel</button>
+            </div>
+        </div>
+
+        <div id="loading-state" class="loading-state">
+            <span class="icon mr-4">
+                <i class="fas fa-spinner fa-pulse fa-lg"></i>
+            </span>
+            <h1 class="subtitle">Loading...</h1>
+        </div>
+    </div>
+  </section>
+  </body>
+
+  <script>
+        let isLoading = true;
+
+        function createRow(data){
+            var newRow = document.createElement("tr");
+            data.forEach(element => {
+                var newCell = document.createElement("td");
+                newCell.innerHTML = element;
+                newRow.append(newCell);
+            });
+            return newRow;
+        }
+
+        function createTableData(jsonResponse){
+            var tableBody = document.getElementById("main-table-body");
+            jsonResponse.forEach(rawDataRow => {
+                var newRow = createRow(rawDataRow.slice(1));
+                tableBody.appendChild(newRow);
+            })
+            document.getElementById("loading-state").style["display"] = "none";
+            document.getElementById("main-content").style["display"] = "block";
+        }
+
+        function updateMetrics(metrics){
+            document.getElementById("mean-time").innerHTML = metrics.mean_time;
+            document.getElementById("min-time").innerHTML = metrics.min_time;
+            document.getElementById("max-time").innerHTML = metrics.max_time;
+            document.getElementById("total-time").innerHTML = metrics.total_time;
+        }
+
+        function fetchData(){
+            fetch('/api/data')
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(jsonResponse) {
+                    createTableData(jsonResponse.result);
+                    updateMetrics(jsonResponse.metrics);
+            });
+        }
+
+        function refreshData(){
+            document.getElementById("loading-state").style["display"] = "flex";
+            document.getElementById("main-content").style["display"] = "none";
+            document.getElementById("main-table-body").innerHTML = null;
+            fetch('/api/refresh')
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(jsonresponse) {
+                    fetchData();
+                });
+        }
+
+        function refreshDataParallel(){
+            document.getElementById("loading-state").style["display"] = "flex";
+            document.getElementById("main-content").style["display"] = "none";
+            document.getElementById("main-table-body").innerHTML = null;
+            fetch('/api/refresh/parallel')
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(jsonresponse) {
+                    fetchData();
+                });
+        }
+
+        fetchData();
+  </script>
+  
+  <style>
+    .main-content {
+        display: none;
+    }
+
+    .loading-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 120px 0;
+    }
+
+    .colored-icon {
+        border-radius: 9999px;
+        background-color: rgba(253, 70, 89, 10%);
+        color: rgb(253, 70, 89);
+    }
+
+    .card-content {
+        text-align: center;
+        padding-top: 28px;
+        padding-bottom: 28px;
+    }
+
+    .cta-section {
+        margin-top: 48px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .cta-section > .button {
+        background-color: rgb(253, 70, 89);
+        border-radius: 4px;
+        color: white;
+        font-weight: 600;
+        height: 3.5em;
+        padding: auto 48px;
+    }
+
+    .cta-section > .button:hover {
+        background-color: rgb(199, 61, 74);
+    }
+
+    .cta-section > .button.is-secondary {
+        border: solid 1px rgb(253, 70, 89);
+        color: rgb(253, 70, 89);
+        border-radius: 4px;
+        background-color: white;
+        font-weight: 600;
+        height: 3.5em;
+        padding: auto 48px;
+    }
+
+    .cta-section > .button.is-secondary:hover {
+        background-color: rgba(199, 61, 74, 20%);
+    }
+
+    .cta-section > .button:first-child {
+        margin-right: 24px;
+    }
+  </style>
+</html>

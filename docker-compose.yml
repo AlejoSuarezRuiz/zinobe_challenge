@@ -1,0 +1,15 @@
+version: '3'
+services:
+  app:
+    build: ./app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./app:/app
+    environment:
+      - RAPID_API=${RAPID_API}
+      - RAPID_API_KEY=${RAPID_API_KEY}
+      - REST_COUNTRIES_API=${REST_COUNTRIES_API}
+      - FLASK_ENV=development
+#   redis:
+#     image: "redis:alpine"
